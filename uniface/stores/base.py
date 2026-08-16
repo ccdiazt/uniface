@@ -52,6 +52,32 @@ class BaseStore(ABC):
             `(None, similarity)` when below *threshold* or empty.
         """
 
+    def search_topk(
+        self,
+        embedding: np.ndarray,
+        k: int = 5,
+        threshold: float = 0.4,
+    ) -> list[tuple[Metadata, float]]:
+        """Find the top-k matches for a query embedding.
+
+        Non-abstract so existing backends keep working; backends that can
+        serve ranked candidate lists (1:N identification, deduplication)
+        should override it.
+
+        Args:
+            embedding: L2-normalised query vector.
+            k: Maximum number of matches to return.
+            threshold: Minimum similarity for a candidate to be included.
+
+        Returns:
+            Up to *k* `(metadata, similarity)` pairs sorted by decreasing
+            similarity. Empty list when nothing clears *threshold*.
+
+        Raises:
+            NotImplementedError: If the backend does not support top-k search.
+        """
+        raise NotImplementedError(f'{self.__class__.__name__} does not implement search_topk')
+
     @abstractmethod
     def remove(self, key: str, value: Any) -> int:
         """Remove all entries where `metadata[key] == value`.

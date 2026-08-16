@@ -20,6 +20,7 @@ This library provides unified APIs for:
 - Face anti-spoofing
 - Face image quality assessment (eDifFIQA)
 - Privacy/anonymization
+- 1:1 verification with confidence bands and blink-based active liveness
 """
 
 from __future__ import annotations
@@ -33,11 +34,12 @@ from uniface.log import Logger, enable_logging
 from uniface.model_store import download_models, get_cache_dir, set_cache_dir, verify_model_weights
 
 from .analyzer import FaceAnalyzer
-from .attribute import AgeGender, Emotion, FaceAttribNet, FairFace
+from .attribute import AgeGender, Emotion, FaceAttribNet, FairFace, QualityPredictor, SpoofingPredictor
 from .detection import SCRFD, BlazeFace, CenterFace, RetinaFace, YOLOv5Face, YOLOv8Face
 from .gaze import MobileGaze
 from .headpose import HeadPose
 from .landmark import FaceMesh, Landmark106, PIPNet
+from .liveness import BlinkDetector, compute_eye_aspect_ratios, eye_aspect_ratio
 from .matting import MODNet
 from .parsing import BiSeNet, XSeg
 from .privacy import BlurFace
@@ -59,7 +61,9 @@ from .types import (
     HeadPoseResult,
     QualityResult,
     SpoofingResult,
+    VerificationResult,
 )
+from .verification import verify_faces
 
 __all__ = [
     # Metadata
@@ -112,6 +116,16 @@ __all__ = [
     # Quality models
     'EDifFIQA',
     'QualityResult',
+    # FaceAnalyzer adapters
+    'QualityPredictor',
+    'SpoofingPredictor',
+    # Verification
+    'VerificationResult',
+    'verify_faces',
+    # Active liveness
+    'BlinkDetector',
+    'compute_eye_aspect_ratios',
+    'eye_aspect_ratio',
     # Tracking
     'BYTETracker',
     # Privacy

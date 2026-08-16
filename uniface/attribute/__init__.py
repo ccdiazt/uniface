@@ -12,6 +12,7 @@ from uniface.attribute.age_gender import AgeGender
 from uniface.attribute.base import BaseAttribute
 from uniface.attribute.faceattribnet import FaceAttribNet
 from uniface.attribute.fairface import FairFace
+from uniface.attribute.wrappers import QualityPredictor, SpoofingPredictor
 from uniface.types import DemographyResult, EmotionResult, Face, FaceStateResult
 
 try:
@@ -39,4 +40,6 @@ __all__ = [
     'FaceAttribNet',
     'FaceStateResult',
     'FairFace',
+    'QualityPredictor',
+    'SpoofingPredictor',
 ]

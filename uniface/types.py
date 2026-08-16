@@ -33,6 +33,7 @@ __all__ = [
     'HeadPoseResult',
     'QualityResult',
     'SpoofingResult',
+    'VerificationResult',
 ]
 
 
@@ -99,6 +100,30 @@ class QualityResult:
 
     def __repr__(self) -> str:
         return f'QualityResult(score={self.score:.4f})'
+
+
+@dataclass(slots=True, frozen=True)
+class VerificationResult:
+    """Result of 1:1 face verification.
+
+    Attributes:
+        is_match: True when the similarity reached the decision threshold.
+        similarity: Cosine similarity between the two embeddings, in [-1, 1].
+        confidence: Confidence band label for the similarity. With the default
+            bands one of 'high', 'medium', 'low', or 'no_match'; custom bands
+            passed to `verify_faces` produce their own labels. The band is
+            derived independently of the decision threshold, so a similarity
+            below the threshold can still land in a named band — useful as a
+            manual-review zone.
+    """
+
+    is_match: bool
+    similarity: float
+    confidence: str
+
+    def __repr__(self) -> str:
+        label = 'Match' if self.is_match else 'NoMatch'
+        return f'VerificationResult({label}, similarity={self.similarity:.4f}, confidence={self.confidence})'
 
 
 @dataclass(slots=True, frozen=True)
@@ -266,6 +291,10 @@ class Face:
         mask: Probability a face mask is present (optional, from FaceAttribNet).
         sunglasses: Probability sunglasses are present (optional, from FaceAttribNet).
         quality: Face image quality score in [0, 1] (optional, from eDifFIQA).
+        is_real: Whether the face is real/live rather than a presentation attack
+            (optional, from SpoofingPredictor).
+        spoofing_confidence: Confidence of the anti-spoofing prediction for the
+            winning class, not the probability of "real" (optional).
         track_id: Persistent track ID assigned by BYTETracker (optional).
         sex: Read-only. Gender as a human-readable string ("Female" or "Male").
         bbox_xyxy: Read-only. Bounding box in (x1, y1, x2, y2) format.
@@ -291,6 +320,8 @@ class Face:
     mask: float | None = None
     sunglasses: float | None = None
     quality: float | None = None
+    is_real: bool | None = None
+    spoofing_confidence: float | None = None
     track_id: int | None = None
 
     def compute_similarity(self, other: Face) -> float:
@@ -377,6 +408,12 @@ class Face:
             parts.append(', '.join(states))
         if self.quality is not None:
             parts.append(f'quality={self.quality:.4f}')
+        if self.is_real is not None:
+            spoof_label = 'Real' if self.is_real else 'Fake'
+            if self.spoofing_confidence is not None:
+                parts.append(f'spoofing={spoof_label}({self.spoofing_confidence:.2f})')
+            else:
+                parts.append(f'spoofing={spoof_label}')
         if self.embedding is not None:
             parts.append(f'embedding_dim={self.embedding.shape[-1]}')
         return ', '.join(parts) + ')'

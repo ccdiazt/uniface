@@ -115,6 +115,47 @@ class FAISS(BaseStore):
             return self.metadata[idx], similarity
         return None, similarity
 
+    def search_topk(
+        self,
+        embedding: np.ndarray,
+        k: int = 5,
+        threshold: float = 0.4,
+    ) -> list[tuple[Metadata, float]]:
+        """Find the top-k matches for a query embedding.
+
+        Useful for 1:N identification and duplicate screening, where the
+        caller needs a ranked candidate list rather than a single best match.
+
+        Args:
+            embedding: Query embedding vector (must be L2-normalised).
+            k: Maximum number of matches to return.
+            threshold: Minimum cosine similarity for a candidate to be included.
+
+        Returns:
+            Up to *k* `(metadata, similarity)` pairs sorted by decreasing
+            similarity. Empty list when the index is empty or nothing
+            clears *threshold*.
+
+        Raises:
+            ValueError: If *k* is less than 1.
+        """
+        if k < 1:
+            raise ValueError(f'k must be >= 1, got {k}')
+        if self.index.ntotal == 0:
+            return []
+
+        vec = self._prepare(embedding).reshape(1, -1)
+        similarities, indices = self.index.search(vec, min(k, self.index.ntotal))
+
+        results: list[tuple[Metadata, float]] = []
+        for similarity, idx in zip(similarities[0], indices[0], strict=True):
+            similarity, idx = float(similarity), int(idx)
+            if idx < 0 or idx >= len(self.metadata):
+                continue
+            if similarity > threshold:
+                results.append((self.metadata[idx], similarity))
+        return results
+
     def remove(self, key: str, value: Any) -> int:
         """Remove all entries where `metadata[key] == value`.
 
